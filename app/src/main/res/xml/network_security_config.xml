@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Permite trafico HTTP sin cifrar (cleartext) solo hacia 10.0.2.2, la IP
+     especial del emulador para llegar al backend local en el computador
+     anfitrion. El resto del trafico sigue exigiendo HTTPS por defecto.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">10.0.2.2</domain>
+    </domain-config>
+</network-security-config>

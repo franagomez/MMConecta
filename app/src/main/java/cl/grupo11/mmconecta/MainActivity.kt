@@ -8,7 +8,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import cl.grupo11.mmconecta.repository.LocalProfilePhotoRepository
 import cl.grupo11.mmconecta.repository.SystemContentNotifier
-import cl.grupo11.mmconecta.repository.LocalLoginRepository
+import cl.grupo11.mmconecta.repository.RetrofitLoginRepository
+import cl.grupo11.mmconecta.repository.RetrofitContentRepository
 import cl.grupo11.mmconecta.viewmodel.ProfilePhotoViewModel
 import cl.grupo11.mmconecta.viewmodel.NotificationsViewModel
 import cl.grupo11.mmconecta.viewmodel.LoginViewModel
@@ -24,7 +25,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -47,7 +55,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MMConectaTheme {
                 val loginViewModel: LoginViewModel = viewModel(factory = viewModelFactory {
-                    initializer { LoginViewModel(LocalLoginRepository()) }
+                    initializer { LoginViewModel(RetrofitLoginRepository()) }
                 })
                 val loginState by loginViewModel.uiState.collectAsStateWithLifecycle()
 
@@ -60,7 +68,7 @@ class MainActivity : ComponentActivity() {
                     )
                 } else {
                     val homeViewModel: HomeViewModel = viewModel(factory = viewModelFactory {
-                        initializer { HomeViewModel(LocalFavoritesRepository(applicationContext)) }
+                        initializer { HomeViewModel(LocalFavoritesRepository(applicationContext), RetrofitContentRepository()) }
                     })
                     val profileViewModel: ProfileViewModel = viewModel(factory = viewModelFactory {
                         initializer { ProfileViewModel(LocalProfileRepository(applicationContext)) }
@@ -74,6 +82,21 @@ class MainActivity : ComponentActivity() {
                     val photoState by photoViewModel.uiState.collectAsStateWithLifecycle()
                     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) {
                         photoViewModel.onCameraResult(it)
+                    }
+                    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+                        ActivityResultContracts.RequestPermission()
+                    ) { granted ->
+                        if (granted) {
+                            try {
+                                cameraLauncher.launch(null)
+                            } catch (error: ActivityNotFoundException) {
+                                photoViewModel.cameraUnavailable()
+                            } catch (error: SecurityException) {
+                                photoViewModel.cameraUnavailable()
+                            }
+                        } else {
+                            photoViewModel.cameraUnavailable()
+                        }
                     }
                     val notificationPermissionLauncher = rememberLauncherForActivityResult(
                         ActivityResultContracts.RequestPermission()
@@ -100,7 +123,24 @@ class MainActivity : ComponentActivity() {
                     AnimatedContent(
                         targetState = currentScreen,
                         label = "screen-transition",
-                        transitionSpec = { fadeIn() togetherWith fadeOut() }
+                        transitionSpec = {
+                            (
+                                scaleIn(
+                                    initialScale = 0.9f,
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                        stiffness = Spring.StiffnessLow
+                                    )
+                                ) + fadeIn(animationSpec = tween(300)) +
+                                    slideInHorizontally(animationSpec = tween(350)) { width -> width / 4 }
+                            ) togetherWith (
+                                scaleOut(
+                                    targetScale = 1.06f,
+                                    animationSpec = tween(220)
+                                ) + fadeOut(animationSpec = tween(220)) +
+                                    slideOutHorizontally(animationSpec = tween(250)) { width -> -width / 4 }
+                            )
+                        }
                     ) { screen ->
                         when (screen) {
                             "profile" -> ProfileScreen(profileState, profileViewModel::changeName, profileViewModel::changeEmail,
@@ -108,13 +148,7 @@ class MainActivity : ComponentActivity() {
                                 profileViewModel::save, onBack = { showProfile = false },
                                 photoState = photoState,
                                 onTakePhoto = {
-                                    try {
-                                        cameraLauncher.launch(null)
-                                    } catch (error: ActivityNotFoundException) {
-                                        photoViewModel.cameraUnavailable()
-                                    } catch (error: SecurityException) {
-                                        photoViewModel.cameraUnavailable()
-                                    }
+                                    cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                                 })
                             "detail" -> selectedContent?.let {
                                 ContentDetailScreen(it, onBack = { selectedId = null })
@@ -124,6 +158,7 @@ class MainActivity : ComponentActivity() {
                                 onFavoriteSelected = homeViewModel::toggleFavorite,
                                 onFavoritesFilterChanged = homeViewModel::showFavorites,
                                 onRetryFavorites = homeViewModel::loadFavorites,
+                                onRetryContents = homeViewModel::retryContents,
                                 notificationsState = notificationsState,
                                 onSendNotification = {
                                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
