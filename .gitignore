@@ -9,7 +9,12 @@
 /.idea/assetWizardSettings.xml
 .DS_Store
 /build
+/app/build
 /captures
 .externalNativeBuild
 .cxx
 local.properties
+
+# EP4: no subir el keystore de firma ni sus contraseñas al repo
+/keystore/*.jks
+/keystore/keystore.properties
