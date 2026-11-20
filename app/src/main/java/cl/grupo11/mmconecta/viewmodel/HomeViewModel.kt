@@ -84,7 +84,9 @@ class HomeViewModel(
     }
 
     private suspend fun loadFavoritesInternal() {
-        mutableState.update { it.copy(favoritesBusy = true, error = null) }
+        // No limpiamos "error" aquí: si la carga del catálogo falló justo antes,
+        // ese mensaje debe seguir visible aunque los favoritos carguen bien.
+        mutableState.update { it.copy(favoritesBusy = true) }
         try {
             val ids = favorites.load().intersect(allContents.map { it.id }.toSet())
             mutableState.update { filtered(it.copy(favoriteIds = ids, favoritesBusy = false, favoritesLoaded = true)) }
