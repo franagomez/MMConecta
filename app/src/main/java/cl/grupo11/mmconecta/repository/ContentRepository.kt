@@ -27,7 +27,7 @@ class DemoContentRepository : ContentRepository {
 }
 
 /**
- * Implementacion real para el EP4: consume el catalogo desde el backend
+ * consume el catalogo desde el backend
  * Spring Boot vía Retrofit. Reemplaza a DemoContentRepository sin que el
  * HomeViewModel necesite cambiar (misma interfaz ContentRepository).
  */

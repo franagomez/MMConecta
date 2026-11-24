@@ -10,9 +10,7 @@ import java.util.concurrent.TimeUnit
  * Cliente Retrofit unico para hablar con el backend MMConecta (Spring Boot).
  *
  * 10.0.2.2 es la IP especial que usa el emulador de Android Studio para
- * apuntar al "localhost" del computador que lo aloja. Si se prueba en un
- * dispositivo fisico conectado por USB en vez del emulador, hay que
- * cambiar esta URL por la IP real del computador en la red local.
+ * apuntar al "localhost" del computador que lo aloja
  */
 object ApiClient {
 

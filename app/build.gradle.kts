@@ -1,20 +1,7 @@
-import java.util.Properties
-import java.io.FileInputStream
-
 plugins {
     id("com.android.application")
 
     id("org.jetbrains.kotlin.plugin.compose")
-}
-
-// EP4: configuracion de firma para el APK de release. Las contraseñas NO
-// estan en este archivo: se leen de keystore/keystore.properties, que no se
-// sube al repo (ver .gitignore). Cada integrante crea su propia copia local
-// a partir de keystore/keystore.properties.example.
-val keystorePropertiesFile = rootProject.file("keystore/keystore.properties")
-val keystoreProperties = Properties()
-if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
 android {
@@ -34,30 +21,9 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    signingConfigs {
-        create("release") {
-            if (keystorePropertiesFile.exists()) {
-                storeFile = rootProject.file("keystore/" + keystoreProperties.getProperty("storeFile"))
-                storePassword = keystoreProperties.getProperty("storePassword")
-                keyAlias = keystoreProperties.getProperty("keyAlias")
-                keyPassword = keystoreProperties.getProperty("keyPassword")
-            }
-        }
-    }
-
-    buildTypes {
-        release {
-            if (keystorePropertiesFile.exists()) {
-                signingConfig = signingConfigs.getByName("release")
-            }
-        }
-    }
-
 }
 
-// EP4 (Guía 15): las pruebas unitarias usan JUnit5 (en vez del JUnit4 que
-// trae Android por defecto), por eso hay que decirle a Gradle que corra
-// las pruebas con la plataforma de JUnit5.
+
 tasks.withType<Test> {
     useJUnitPlatform()
 }
@@ -68,7 +34,7 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
 
-    // EP4 (Guía 15): stack de pruebas unitarias - JUnit5 + Kotest + MockK
+
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.3")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.11.3")
     testImplementation("io.kotest:kotest-runner-junit5:5.9.1")

@@ -21,7 +21,7 @@ class LocalLoginRepository : LoginRepository {
 }
 
 /**
- * Implementacion real para el EP4: valida las credenciales contra el
+ * valida las credenciales contra el
  * backend Spring Boot vía Retrofit. Si el backend no responde (por ejemplo
  * no esta corriendo), se trata como login fallido en vez de crashear la app.
  */
